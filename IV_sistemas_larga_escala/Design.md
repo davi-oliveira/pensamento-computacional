@@ -1,8 +1,8 @@
-# Design – Pensamento Computacional para Sistemas de Larga Escala
+# Design – GovDevOps Platform
 
 ## Visão Geral do Sistema
 
-Este documento detalha a aplicação dos conceitos de pensamento computacional no design da Plataforma Acadêmica Inteligente, abordando decomposição, abstração e padrões utilizados.
+Este documento detalha a aplicação dos conceitos de pensamento computacional no design da Plataforma de Entrega Contínua para Órgãos Governamentais, abordando decomposição, abstração e padrões utilizados para implementar esteira DevOps com Docker, Kubernetes e Rancher.
 
 ---
 
@@ -14,157 +14,211 @@ A decomposição foi aplicada para dividir o sistema em módulos menores e geren
 
 | Módulo | Descrição | Responsabilidades |
 |--------|-----------|-------------------|
-| **Autenticação** | Gerenciamento de usuários | Login, logout, recuperação de senha, controle de acesso |
-| **Gestão de Disciplinas** | Cadastro e controle de disciplinas | Matrícula, histórico, plano de aula |
-| **Relatórios** | Painel da coordenação | Gráficos, estatísticas,导出 de dados |
-| **Recomendação Inteligente** | Sistema de IA | Sugestões personalizadas baseadas em perfil |
+| **Containerização** | Docker e imagens | Build, push, versionamento de containers |
+| **Orquestração** | Kubernetes | Deploy, scaling, service mesh |
+| **Gestão de Clusters** | Rancher | Interface gráfica, multi-cluster |
+| **Pipeline CI/CD** | GitLab CI / ArgoCD | Automação de build, test, deploy |
+| **GitOps** | ArgoCD / Flux | Declarative infrastructure |
+| **Service Mesh** | Istio | Observabilidade, mTLS |
 
 ### 1.2 Submódulos
 
-- **Autenticação:**
-  - Cadastro de usuários
-  - Login/Logout
-  - Redefinição de senha
-  - Autenticação em dois fatores (2FA)
+- **Containerização:**
+  - Dockerfiles otimizados
+  - Multi-stage builds
+  - Registros de imagens (Harbor)
+  - Scan de vulnerabilidades
 
-- **Gestão de Disciplinas:**
-  - Matrícula em disciplinas
-  - Lançamento de notas
-  - Calendário acadêmico
-  - Comunicados
+- **Orquestração:**
+  - Deployments
+  - Services
+  - Ingress controllers
+  - Persistent volumes
+  - Network policies
 
-- **Relatórios:**
-  - Desempenho por aluno
-  - Médias por disciplina
-  - Relatórios de evasão
-  - Dashboard interativo
+- **Gestão de Clusters:**
+  - Rancher UI
+  - Catálogo de apps
+  - Monitoramento
+  - Backup/restore
 
-- **Recomendação Inteligente:**
-  - Análise de comportamento
-  - Sugestão de disciplinas
-  - Predição de desempenho
-  - Recomendação de estudos
+- **Pipeline CI/CD:**
+  - Build automatizado
+  - Testes automatizados
+  - Artifact management
+  - Rollback automático
 
 ---
 
 ## 2. Abstração
 
-### 2.1 Modelo de Classes Principal
+### 2.1 Arquitetura da Plataforma GovDevOps
 
 ```
-┌─────────────────┐       ┌─────────────────┐
-│    Usuario     │       │   Disciplina    │
-├─────────────────┤       ├─────────────────┤
-│ - id            │       │ - id            │
-│ - nome          │       │ - codigo        │
-│ - email         │       │ - nome          │
-│ - tipo          │       │ - professor     │
-│ - senha         │       │ - periodo       │
-└────────┬────────┘       └────────┬────────┘
-         │                          │
-         │ 1:N                      │ N:N
-         ▼                          ▼
-┌─────────────────┐       ┌─────────────────┐
-│   Matricula    │       │     Nota        │
-├─────────────────┤       ├─────────────────┤
-│ - id            │       │ - id            │
-│ - usuario_id    │       │ - matricula_id  │
-│ - disciplina_id │       │ - valor         │
-│ - data          │       │ - data          │
-│ - status        │       │ - tipo          │
-└─────────────────┘       └─────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                    CAMADA DE APRESENTAÇÃO                       │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐             │
+│  │   Rancher   │  │   Grafana    │  │   ArgoCD    │             │
+│  │     UI      │  │   Dashboard  │  │   UI        │             │
+│  └─────────────┘  └─────────────┘  └─────────────┘             │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+┌─────────────────────────────────────────────────────────────────┐
+│                    CAMADA DE ORQUESTRAÇÃO                      │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐             │
+│  │ Kubernetes  │  │    Istio     │  │   ArgoCD    │             │
+│  │   Cluster   │  │ Service Mesh │  │   GitOps    │             │
+│  └─────────────┘  └─────────────┘  └─────────────┘             │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+┌─────────────────────────────────────────────────────────────────┐
+│                    CAMADA DE CONTAINER                          │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐             │
+│  │    Docker    │  │   Harbor    │  │  Terraform  │             │
+│  │   Registry  │  │  Registry   │  │    IaC      │             │
+│  └─────────────┘  └─────────────┘  └─────────────┘             │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+┌─────────────────────────────────────────────────────────────────┐
+│                    CAMADA DE APLICAÇÕES                         │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐             │
+│  │ Aplicações  │  │ Aplicações  │  │ Aplicações  │             │
+│  │  Modernas   │  │  Legadas    │  │  Microserv  │             │
+│  │  (Java/Go)  │  │ (Delphi/VB) │  │   (Node)    │             │
+│  └─────────────┘  └─────────────┘  └─────────────┘             │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ### 2.2 Camadas de Abstração
 
 1. **Camada de Apresentação (UI)**
-   - Interfaces web e mobile
-   - Componentes visuais
-   - Interações do usuário
+   - Rancher UI para gestão de clusters
+   - Grafana para monitoramento
+   - ArgoCD UI para GitOps
 
-2. **Camada de Negócio (Business)**
-   - Regras de negócio
-   - Validações
-   - Lógica de recomendação
+2. **Camada de Orquestração (Orchestration)**
+   - Kubernetes para orquestração
+   - Istio para service mesh
+   - Helm para package management
 
-3. **Camada de Dados (Data)**
-   - Repositórios
-   - Modelos de banco de dados
-   - Queries otimizadas
+3. **Camada de Infraestrutura (Infrastructure)**
+   - Docker para containerização
+   - Terraform para IaC
+   - Harbor para registry
+
+4. **Camada de Aplicações (Applications)**
+   - Aplicações legadas containerizadas
+   - Microsserviços modernos
+   - Databases como serviços
 
 ---
 
 ## 3. Reconhecimento de Padrões
 
-### 3.1 Padrões de Projeto Aplicados
+### 3.1 Padrões de Projeto DevOps Aplicados
 
 | Padrão | Aplicação | Benefício |
 |--------|-----------|-----------|
-| **MVC** | Separação UI/Controller/Model | Manutenibilidade |
-| **Repository** | Abstração de acesso a dados | Flexibilidade |
-| **Factory** | Criação de objetos complexos | Baixo acoplamento |
-| **Observer** | Notificações em tempo real | Atualização reativa |
+| **GitOps** | ArgoCD gerencia estado desejado | Infraestrutura como código |
+| **Infrastructure as Code** | Terraform/Ansible | Reprodutibilidade |
+| **Containerização** | Docker multi-stage builds | Consistência entre ambientes |
+| **Service Mesh** | Istio mTLS | Segurança zero-trust |
+| **Blue-Green Deploy** | Rollback instantâneo | Zero-downtime |
+| **Canary Deploy** | Teste gradual de versões | Risco mínimo |
 
 ### 3.2 Padrões de Interface
 
-- **Login:** Padrão similar a sistemas bancários com validação em tempo real
-- **Notas:** Estrutura inspirada em LMS (Blackboard, Moodle)
-- **Dashboard:** Layout padrão de painéis analíticos
+- **Rancher:** Interface web para gestão de múltiplos clusters Kubernetes
+- **Grafana:** Dashboards de monitoramento com métricas customizadas
+- **ArgoCD:** Visualização de estado de aplicações declarativas
 
-### 3.3 Padrões de Segurança
+### 3.3 Padrões de Segurança Governamental
 
-- Criptografia de senhas (bcrypt)
-- Tokens JWT para autenticação
-- Rate limiting em APIs
-- Sanitização de inputs
+- **mTLS** (Mutual TLS) entre serviços
+- **Network Policies** para segmentação
+- **Secrets Management** com Vault
+- **Audit Logs** para conformidade TCU
+- **LGPD** compliance para dados pessoais
 
 ---
 
 ## 4. Algoritmos Principais
 
-### 4.1 Cálculo de Médias
+### 4.1 Otimização de Recursos de Cluster
 
 ```
-Função calcularMedia(notas):
-    soma = 0
-    pesoTotal = 0
+Função otimizarRecursos(cluster):
+    Para cada namespace em cluster.namespaces:
+        // Calcular requests baseados em histórico
+        mediaCPU = calcularMedia(namespace.usoCPUhistorico)
+        mediaMemoria = calcularMedia(namespace.usoMemoriahistorico)
+        
+        // Aplicar fator de segurança
+        namespace.requests.cpu = mediaCPU * 1.2
+        namespace.requests.memoria = mediaMemoria * 1.2
+        
+        // Calcular limits baseados em pico
+        namespace.limits.cpu = namespace.requests.cpu * 1.5
+        namespace.limits.memoria = namespace.requests.memoria * 1.5
     
-    Para cada nota em notas:
-        soma += nota.valor * nota.peso
-        pesoTotal += nota.peso
+    Retornar cluster.atualizado
+```
+
+### 4.2 Auto-Scaling Baseado em Métricas
+
+```
+Função calcularReplicaSet(aplicacao, metricas):
+    // HPA baseado em CPU e memória
+    cpuUtilization = metricas.cpuAtual / aplicacao.limits.cpu * 100
+    memoriaUtilization = metricas.memoriaAtual / aplicacao.limits.memoria * 100
     
-    Se pesoTotal > 0:
-        Retornar soma / pesoTotal
+    // Média ponderada para decisão
+    utilizacao = (cpuUtilization * 0.6) + (memoriaUtilization * 0.4)
+    
+    Se utilizacao > 80:
+        // Escalar para cima
+        novoReplicas = min(aplicacao.replicas * 1.5, aplicacao.maxReplicas)
+    Senão Se utilizacao < 30:
+        // Escalar para baixo
+        novoReplicas = max(aplicacao.replicas * 0.7, aplicacao.minReplicas)
     Senão:
-        Retornar 0
+        novoReplicas = aplicacao.replicas
+    
+    Retornar novoReplicas
 ```
 
-### 4.2 Sistema de Recomendação
+### 4.3 Estratégia de Blue-Green Deployment
 
 ```
-Função recomendarDisciplinas(aluno, historico):
-    disciplinasSugeridas = []
+Função blueGreenDeploy(aplicacao, novaVersao):
+    // Verificar saúde da versão atual (blue)
+    Se not verificarSaude(aplicacao.blue):
+        Log(\"Blue não saudável, abortando deploy\")
+        Retornar False
     
-    Para cada disciplina em disciplinasDisponiveis:
-        pontuacao = 0
-        
-        // Baseado em área de interesse
-        Se disciplina.area IN aluno.areasInteresse:
-            pontuacao += 30
-        
-        // Baseado em desempenho em disciplinas relacionadas
-        Se disciplina.preRequisitos IN historico.aprovadas:
-            pontuacao += 40
-        
-        // Baseado em carga horária disponível
-        Se aluno.cargaHorariaDisponivel >= disciplina.carga:
-            pontuacao += 20
-        
-        Se pontuacao >= 50:
-            adicionar(disciplinasSugeridas, disciplina)
+    // Deploy green em paralelo
+    aplicacao.green = criarReplicaSet(novaVersao)
     
-    Ordenar(disciplinasSugeridas, por pontuacao decrescente)
-    Retornar top 5 de disciplinasSugeridas
+    // Aguardar green estar pronto
+    Aguardar(aplicacao.green.ready)
+    
+    // Teste de smoke
+    Se not executarSmokeTests(aplicacao.green):
+        Log(\"Smoke tests falharam, rollback\")
+        deletar(aplicacao.green)
+        Retornar False
+    
+    // Switch de tráfego ( Canary gradual )
+    Para percentual in [10, 25, 50, 100]:
+        redirecionarTrafego(aplicacao, percentual)
+        Aguardar(5 minutos)
+        Se verificarErros(aplicacao):
+            rollback(aplicacao)
+            Retornar False
+    
+    // Promover green para blue
+    aplicacao.blue = aplicacao.green
+    Retornar True
 ```
 
 ---
@@ -173,11 +227,16 @@ Função recomendarDisciplinas(aluno, historico):
 
 ### 5.1 Tecnologias Selecionadas
 
-- **Frontend:** React.js
-- **Backend:** Node.js com Express
-- **Banco de Dados:** PostgreSQL
-- **Cache:** Redis
-- **Mensageria:** RabbitMQ
+| Categoria | Tecnologia | Justificativa |
+|-----------|------------|---------------|
+| **Container** | Docker 24.x | Padrão da indústria, suporte enterprise |
+| **Orquestração** | Kubernetes 1.28+ | Maior ecossistema, multi-cloud |
+| **Gestão de Clusters** | Rancher 2.8+ | Interface unificada, multi-cluster |
+| **CI/CD** | GitLab CI + ArgoCD | GitOps nativo, rollback automático |
+| **Service Mesh** | Istio 1.20+ | Observabilidade, mTLS |
+| **IaC** | Terraform + Ansible | Infraestrutura declarativa |
+| **Observabilidade** | Prometheus + Grafana | Stack open source mais robusto |
+| **Registry** | Harbor | Suporte a políticas de segurança |
 
 ### 5.2 Justificativas
 

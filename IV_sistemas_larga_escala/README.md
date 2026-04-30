@@ -1,48 +1,64 @@
-# Projeto – Pensamento Computacional para Sistemas de Larga Escala
+# Projeto – Infraestrutura DevOps para Órgãos Governamentais Brasileiros
 
 ## Descrição
 
 Este projeto foi desenvolvido como parte da disciplina Pensamento Computacional no curso de Engenharia de Software, com a Profa. Kadidja Valéria.
 
-O objetivo é aplicar os conceitos de pensamento computacional e engenharia de software na concepção de um sistema de larga escala, explorando decomposição, abstração, reconhecimento de padrões e algoritmos.
+O objetivo é aplicar os conceitos de pensamento computacional e engenharia de software no design de uma infraestrutura DevOps de larga escala, adequada para órgãos governamentais brasileiros que enfrentam o desafio de gerenciar centenas de aplicações legadas e modernas com recursos limitados.
 
-## Objetivos
+## Contexto do Problema
 
-- Relacionar engenharia de software e pensamento computacional.
-- Reconhecer princípios e padrões relevantes para sistemas de larga escala.
-- Identificar dificuldades reais no desenvolvimento de aplicações complexas.
-- Aplicar metodologias ágeis no planejamento do projeto.
+Órgãos governamentais brasileiros (federal, estadual e municipal) enfrentam desafios únicos:
+
+- **Centenas de aplicações legadas** em tecnologias diversas (Delphi, VB6, Java 6, .NET Framework)
+- **Orçamento limitado** para modernização e manutenção de infraestrutura
+- **Legislação restritiva** (LGPD, TCU, políticas de segurança da informação)
+- **Equipe reduzida** de infraestrutura e desenvolvimento
+- **Necessidade de alta disponibilidade** para serviços essenciais à população
 
 ## Sistema Proposto
 
-**Nome do Sistema:** Plataforma Acadêmica Inteligente
+**Nome do Sistema:** GovDevOps Platform - Plataforma de Entrega Contínua para Governo
 
 **Descrição:**
 
-Uma aplicação web para gestão acadêmica que integra:
+Uma plataforma de DevOps completa que permite:
+- Containerização de aplicações legadas e modernas
+- Orquestração via Kubernetes com gestão via Rancher
+- Pipeline CI/CD automatizado com GitOps
+- Economia de recursos através de consolidação de infraestrutura
+- Conformidade com legislações brasileiras de segurança
 
-- Cadastro e autenticação de usuários.
-- Módulo de disciplinas e notas.
-- Sistema de recomendações personalizadas (IA).
-- Painel de relatórios para coordenação.
+## Objetivos
+
+- Consolidar aplicações governamentais em infraestrutura containerizada
+- Reduzir custos de infraestrutura em até 70% através de otimização de recursos
+- Implementar entrega contínua com governança e compliance
+- Garantir conformidade com políticas de segurança da informação
+- Modernizar aplicações legadas gradualmente (strangler fig pattern)
 
 ## Pensamento Computacional Aplicado
 
 ### Decomposição:
-- Autenticação
-- Gestão de disciplinas
-- Relatórios
-- Recomendação inteligente
+- Containerização (Docker)
+- Orquestração (Kubernetes)
+- Gestão de Clusters (Rancher)
+- Pipeline CI/CD
+- GitOps
+- Service Mesh
 
 ### Reconhecimento de Padrões:
-- Login semelhante a sistemas bancários.
-- Estrutura de notas inspirada em LMS (Blackboard, Moodle).
+- Arquitetura de microsserviços já utilizada em e-governo
+- Padrões de governo digital (gov.br, SPB, e-CAC)
 
 ### Abstração:
-- Diagrama simplificado em UML para representar módulos principais.
+- Modelo de camadas para infraestrutura
+- Diagrama de componentes para pipeline DevOps
 
 ### Algoritmos:
-- Fluxo de cálculo de médias e recomendações personalizadas.
+- Otimização de recursos de cluster
+- Auto-scaling baseado em métricas
+- Blue-Green deployment
 
 ## Metodologia de Desenvolvimento
 
@@ -70,10 +86,10 @@ Projeto_PensamentoComputacional_LargaEscala/
 
 ## 📅 Entrega
 
-- **Data:** Aula de 23/04/2026
+- **Data:** Aula de 30/04/2026
 - **Local:** Repositório GitHub da disciplina
-- **Commit:** "Entrega Projeto Aula – Pensamento Computacional para Sistemas de Larga Escala"
+- **Commit:** "Entrega Projeto Aula – DevOps para Governo Brasileiro"
 
 ---
 
-> **Nota:** Este README serve como modelo base. Os alunos podem adaptá-lo conforme o sistema escolhido (e-commerce, rede social, sistema de transporte, etc.).
+> **Nota:** Este projeto foi adaptado para abordar desafios reais de DevOps em órgãos governamentais brasileiros, com foco em economia de recursos e conformidade legal.

@@ -1,191 +1,209 @@
-# Desafios – Pensamento Computacional para Sistemas de Larga Escala
+# Desafios – GovDevOps Platform
 
-Este documento lista os principais desafios identificados no desenvolvimento da Plataforma Acadêmica Inteligente, bem como as soluções propostas para cada um deles.
+Este documento lista os principais desafios identificados no desenvolvimento da Plataforma de Entrega Contínua para Órgãos Governamentais Brasileiros, bem como as soluções propostas para cada um deles.
 
 ---
 
 ## 1. Desafios Técnicos
 
-### 1.1 Escalabilidade para Milhares de Usuários Simultâneos
+### 1.1 Containerização de Aplicações Legadas
 
-**Problema:** O sistema deve suportar milhares de usuários acessando simultaneamente sem degradação de performance.
+**Problema:** Órgãos governamentais possuem centenas de aplicações em tecnologias legadas (Delphi, VB6, Java 6, .NET Framework) que nunca foram containerizadas.
 
 **Soluções Propostas:**
 
 | Estratégia | Descrição | Prioridade |
 |------------|-----------|------------|
-| **Load Balancing** | Distribuir requisições entre múltiplos servidores | Alta |
-| **Auto Scaling** | Ajuste dinâmico de recursos baseado em demanda | Alta |
-| **Database Connection Pool** | Pool de conexões para otimizar acesso ao banco | Média |
-| **CDN para Assets** | Entrega de arquivos estáticos via CDN | Média |
+| **Strangler Fig Pattern** | Migrar funcionalidades gradualmente | Alta |
+| **Wrapper Scripts** | Criar scripts de wrapper para apps legadas | Alta |
+| **Multi-stage Builds** | Otimizar imagens para apps Java 6+ | Média |
+| **Sidecar Pattern** | Container auxiliar para logging/monitoring | Média |
 
 **Implementação:**
 ```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│   Usuário   │────▶│Load Balancer│────▶│  Servidor 1 │
-└─────────────┘     └─────────────┘     └─────────────┘
-                           │              ┌─────────────┐
-                           ├─────────────▶│  Servidor 2 │
-                           │              └─────────────┘
-                           │              ┌─────────────┐
-                           └─────────────▶│  Servidor N │
-                                          └─────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                    Aplicação Legada                         │
+│  ┌─────────────────┐  ┌─────────────────┐                  │
+│  │   Wrapper.sh    │  │   App Legada    │                  │
+│  │  (Entry Point)  │  │  (Delphi/VB6)   │                  │
+│  └────────┬────────┘  └────────┬────────┘                  │
+│           │                     │                           │
+│           └──────────┬──────────┘                           │
+│                      ▼                                       │
+│           ┌─────────────────────┐                           │
+│           │   Init Container     │                           │
+│           │  (Configuração)      │                           │
+│           └─────────────────────┘                           │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-### 1.2 Segurança de Dados Sensíveis
+### 1.2 Gestão de Múltiplos Clusters Kubernetes
 
-**Problema:** Proteger dados sensíveis dos usuários (senhas, informações pessoais, notas) conforme os princípios de Saltzer & Schroeder.
-
-**Princípios Aplicados:**
-
-| Princípio | Implementação |
-|-----------|---------------|
-| **Economy of Mechanism** | APIs minimalistas, código limpo |
-| **Fail-Safe Default** | Negar acesso por padrão |
-| **Complete Mediation** | Verificar permissões em cada acesso |
-| **Open Design** | Código auditável pela comunidade |
-| **Separation of Privilege** | Múltiplas camadas de autenticação |
-| **Least Privilege** | Permissões mínimas necessárias |
-| **Psychological Acceptability** | Interface intuitiva de segurança |
-
-**Medidas de Segurança:**
-
-- Criptografia de senhas com bcrypt (cost factor 12)
-- Tokens JWT com expiração curta (15 min)
-- Refresh tokens armazenados de forma segura
-- HTTPS em todas as comunicações
-- Rate limiting para prevenir ataques
-- Sanitização de inputs contra SQL injection/XSS
-
----
-
-### 1.3 Integração com Sistemas Externos
-
-**Problema:** Integrar com bibliotecas digitais, APIs externas e outros sistemas acadêmicos.
+**Problema:** Cada órgão pode ter dezenas de aplicações com requisitos diferentes, necessitando de múltiplos clusters para isolamento.
 
 **Soluções:**
 
-| Sistema Externo | Tipo de Integração | Abordagem |
-|-----------------|---------------------|-----------|
-| **Biblioteca Digital** | API REST | Adapter pattern |
-| **Sistema de Email** | SMTP | Filas assíncronas |
-| **APIs de Autenticação** | OAuth 2.0 | Federated identity |
-| **Relatórios PDF** | Geração server-side | Workers assíncronos |
+| Abordagem | Descrição | Benefício |
+|-----------|-----------|-----------|
+| **Rancher Multi-Cluster** | Gestão unificada de múltiplos clusters | Visão centralizada |
+| **Federation v2** | Sincronização de recursos entre clusters | Alta disponibilidade |
+| **GitOps com ArgoCD** | Estado declarativo por cluster | Reprodutibilidade |
 
-**Arquitetura de Integração:**
+**Arquitetura de Gestão:**
 ```
-┌──────────────────┐      ┌──────────────────┐
-│  Sistema Principal │────▶│   Message Queue  │
-└──────────────────┘      └────────┬─────────┘
-                                     │
-                    ┌────────────────┼────────────────┐
-                    ▼                ▼                ▼
-            ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
-            │  Biblioteca  │ │    Email     │ │   Relatórios │
-            │    API       │ │    Service   │ │    Worker    │
-            └──────────────┘ └──────────────┘ └──────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                    RANCHER MANAGEMENT                        │
+│  ┌────────────────────────────────────────────────────────┐  │
+│  │                    Rancher Server                       │  │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐             │  │
+│  │  │ Cluster  │  │ Cluster  │  │ Cluster  │             │  │
+│  │  │  Prod    │  │   Dev    │  │  Hml     │             │  │
+│  │  └──────────┘  └──────────┘  └──────────┘             │  │
+│  └────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 1.3 Conformidade com LGPD e TCU
+
+**Problema:** Órgãos governamentais devem seguir diretrizes de segurança e privacidade de dados, com auditorias do TCU.
+
+**Soluções:**
+
+| Requisito | Implementação | Ferramenta |
+|-----------|---------------|------------|
+| **LGPD** | Criptografia de dados sensíveis | Vault + KMS |
+| **TCU** | Logs de auditoria inalteráveis | Auditbeat + Elasticsearch |
+| **Backup** | Backup criptografado com retenção | Velero |
+| **Rede** | Segmentação de rede | Calico + Network Policies |
+
+**Medidas de Segurança:**
+
+- Criptografia em repouso com Vault
+- mTLS entre todos os serviços (Istio)
+- Políticas de rede granulares
+- Logs de auditoria centralizados
+- Backup com retenção conforme TCU
+- Scan de vulnerabilidades em imagens
+
+---
+
+### 1.4 Otimização de Recursos e Economia
+
+**Problema:** Orçamento limitado exige máxima utilização de recursos computacionais.
+
+**Soluções:**
+
+| Estratégia | Descrição | Economia Estimada |
+|-----------|-----------|-------------------|
+| **Resource Requests/Limits** | Definição precisa de recursos | 30-40% |
+| **Pod Disruption Budgets** | Minimizar disrupções | 10% |
+| **Cluster Autoscaler** | Ajuste dinâmico de nodes | 25-35% |
+| **Vertical Pod Autoscaler** | Ajuste vertical automático | 15-25% |
+| **Spot/Preemptible Instances** | Instâncias econômicas | 60-80% |
+
+**Arquitetura de Otimização:**
+```
+┌─────────────────────────────────────────────────────────────┐
+│                  PROMETHEUS + VPA                           │
+│                                                             │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    │
+│  │  Coleta de  │───▶│   Análise   │───▶│   Ajuste    │    │
+│  │  Métricas   │    │   de Uso    │    │   Automático│   │
+│  └─────────────┘    └─────────────┘    └─────────────┘    │
+│        │                                        │          │
+│        ▼                                        ▼          │
+│  ┌─────────────┐                        ┌─────────────┐    │
+│  │   Grafana   │                        │     VPA     │    │
+│  │  Dashboard  │                        │  (Pods)     │    │
+│  └─────────────┘                        └─────────────┘    │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## 2. Desafios de Arquitetura
 
-### 2.1 Microsserviços vs Monolito
+### 2.1 Pipeline CI/CD para Governo
 
-**Decisão:** Arquitetura de microsserviços para permitir escalabilidade independente de cada módulo.
-
-**Serviços:**
-
-| Serviço | Responsabilidade | Escalabilidade |
-|---------|-------------------|-----------------|
-| **auth-service** | Autenticação e autorização | Horizontal |
-| **discipline-service** | Gestão de disciplinas | Horizontal |
-| **grade-service** | Gestão de notas | Horizontal |
-| **report-service** | Geração de relatórios | Horizontal |
-| **recommendation-service** | Sistema de IA | Vertical + Horizontal |
-
----
-
-### 2.2 Consistência de Dados
-
-**Problema:** Garantir consistência em ambiente distribuído.
-
-**Soluções:**
-
-- **Event Sourcing:** Registro de todas as mudanças de estado
-- **Saga Pattern:** Transações distribuídas compensadas
-- **Cache Consistency:** TTLs curtos e invalidation strategy
-
----
-
-## 3. Desafios de UX/UI
-
-### 3.1 Acessibilidade
-
-**Requisitos:**
-
-- Conformidade com WCAG 2.1 (Nível AA)
-- Navegação por teclado completa
-- Leitores de tela compatíveis
-- Contraste mínimo 4.5:1
-
-### 3.2 Responsividade
-
-**Dispositivos Alvo:**
-
-- Desktop (1920x1080+)
-- Tablet (768x1024)
-- Mobile (375x667)
-
----
-
-## 4. Desafios Operacionais
-
-### 4.1 Monitoramento e Observabilidade
-
-**Stack de Monitoramento:**
-
-| Ferramenta | Finalidade |
-|------------|-------------|
-| **Prometheus** | Métricas |
-| **Grafana** | Visualização |
-| **ELK Stack** | Logs |
-| **Jaeger** | Tracing |
-
-### 4.2 Deploy Contínuo
-
-**Pipeline:**
+**Arquitetura Proposta:**
 
 ```
-Code → Build → Test → Stage → Production
-  │      │      │      │        │
-  ▼      ▼      ▼      ▼        ▼
-GitHub  Docker  JUnit  K8s      Canary
+┌─────────────────────────────────────────────────────────────────┐
+│                        PIPELINE CI/CD                           │
+│                                                                 │
+│  ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐    │
+│  │  Code   │───▶│  Build  │───▶│  Test   │───▶│  Stage  │    │
+│  │  Commit │    │  Image  │    │  Unit   │    │  Test   │    │
+│  └─────────┘    └─────────┘    └─────────┘    └─────────┘    │
+│                                              │                  │
+│                                              ▼                  │
+│  ┌─────────────────────────────────────────────────────────┐  │
+│  │                    SECURITY GATES                        │  │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  │  │
+│  │  │  SAST    │  │  DAST    │  │  SCA     │  │  Image   │  │  │
+│  │  │(Static)  │  │(Dynamic) │  │(Dependency│  │ Scan     │  │  │
+│  │  └──────────┘  └──────────┘  └──────────┘  └──────────┘  │  │
+│  └─────────────────────────────────────────────────────────┘  │
+│                                              │                  │
+│                                              ▼                  │
+│  ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐    │
+│  │  Push   │───▶│  ArgoCD  │───▶│ Deploy  │───▶│ Verify  │    │
+│  │  to     │    │  Sync    │    │  to     │    │ Health  │    │
+│  │  Harbor │    │  State   │    │  K8s    │    │         │    │
+│  └─────────┘    └─────────┘    └─────────┘    └─────────┘    │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
----
+### 2.2 GitOps com ArgoCD
 
-## 5. Matriz de Riscos
+**Estratégia:** Todo o estado da infraestrutura e aplicações é declarativo via Git.
 
-| Risco | Probabilidade | Impacto | Mitigação |
-|-------|---------------|---------|-----------|
-| Queda de performance | Média | Alto | Cache + Auto-scaling |
-| Vazamento de dados | Baixa | Crítico | Criptografia + Auditoria |
-| Integração falha | Alta | Médio | Circuit breaker |
-| Dívida técnica | Alta | Médio | Code review + Refactoring |
-
----
-
-## 6. Próximos Passos
-
-- [ ] Implementar protótipo funcional
-- [ ] Configurar ambiente de desenvolvimento
-- [ ] Definir schema do banco de dados
-- [ ] Implementar autenticação básica
-- [ ] Criar dashboard inicial
+| Componente | Descrição |
+|------------|-----------|
+| **Git Repository** | Source of truth para código e config |
+| **ArgoCD** | Sincroniza estado desejado com estado real |
+| **Helm Charts** | Templates parametrizados |
+| **Kustomize** | Overlays para diferentes ambientes |
 
 ---
 
-> **Nota:** Este documento deve ser revisado semanalmente durante as sprints.
+## 3. Desafios Operacionais
+
+### 3.1 Monitoramento e Observabilidade
+
+| Componente | Função |
+|------------|--------|
+| **Prometheus** | Coleta de métricas |
+| **Grafana** | Visualização e alertas |
+| **Loki** | Agregação de logs |
+| **Jaeger** | Distributed tracing |
+| **Alertmanager** | Gestão de alertas |
+
+### 3.2 Disaster Recovery
+
+- Backup automático com Velero
+- RPO (Recovery Point Objective): 1 hora
+- RTO (Recovery Time Objective): 4 horas
+- Testes mensais de recuperação
+
+---
+
+## 4. Benefícios Esperados
+
+| Métrica | Antes | Depois | Melhoria |
+|---------|-------|--------|----------|
+| **Tempo de Deploy** | 2-4 semanas | 1-2 horas | 95% |
+| **Utilização de CPU** | 15-20% | 60-70% | 3x |
+| **Custo por Aplicação** | R$ 5.000/mês | R$ 1.500/mês | 70% |
+| **Tempo de Recovery** | 24-48h | 1-4h | 90% |
+| **Incidentes de Segurança** | 15/mês | 2/mês | 87% |
+
+---
+
+## 5. Conclusão
+
+A implementação de uma esteira DevOps com Docker, Kubernetes e Rancher em órgãos governamentais brasileiros representa um desafio significativo, mas com benefícios mensuráveis em termos de economia de recursos, conformidade legal e modernização tecnológica.
